@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniStudio — AI Video Production Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pro-theme">
+  <div class="background-decor">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <main class="app-container">
+    <!-- Top App Bar -->
+    <header class="app-topbar">
+      <div class="topbar-brand">
+        <span class="brand-mark"></span>
+        <div class="brand-text">
+          <h1>Omni<span>Studio</span></h1>
+          <span class="brand-sub">AI Video Production Suite</span>
+        </div>
+      </div>
+      <div class="type-switch" role="tablist">
+        <button class="type-btn active" id="btnTypeMusic">Music Video</button>
+        <button class="type-btn" id="btnTypeExplainer">AI Explainer</button>
+        <button class="type-btn" id="btnTypeMaster">Music Master</button>
+      </div>
+      <div class="topbar-actions">
+        <span class="save-indicator" id="saveIndicator">Saved</span>
+        <select id="projectChannel" class="select-input project-select" title="Channel this project belongs to — its brand kit styles AI backgrounds & thumbnails">
+          <option value="">No channel</option>
+        </select>
+        <select id="projectSelect" class="select-input project-select" title="Switch project"></select>
+        <input type="file" id="projectImportInput" accept=".zip" style="display: none;">
+        <button class="btn btn-secondary btn-sm" id="btnHome" title="Back to the home hub">⌂ Home</button>
+        <button class="btn btn-secondary btn-sm" id="btnTogglePlanner">Planner</button>
+        <button class="btn btn-secondary btn-sm" id="btnNewProject">New Project</button>
+      </div>
+    </header>
+
+    <!-- ================= LANDING / HOME HUB ================= -->
+    <div id="landingView" style="display: none;">
+      <section class="landing-hero">
+        <h2 class="landing-title">What do you want to create?</h2>
+        <p class="landing-sub">Pick a format and channel — a new project is created with a clear name, so the root never dumps you into a blank one again.</p>
+        <div class="landing-channel-row">
+          <label for="landingChannel">Channel:</label>
+          <select id="landingChannel" class="select-input"><option value="">No channel</option></select>
+        </div>
+        <div class="landing-cards">
+          <button class="landing-card" data-landing-mode="music">
+            <span class="lc-emoji">🎵</span>
+            <span class="lc-name">Music Video</span>
+            <span class="lc-desc">Lyria song + character scenes with karaoke subtitles</span>
+          </button>
+          <button class="landing-card" data-landing-mode="explainer">
+            <span class="lc-emoji">🎬</span>
+            <span class="lc-name">AI Explainer</span>
+            <span class="lc-desc">Prompt → narrated, scripted video with voiceover</span>
+          </button>
+          <button class="landing-card" data-landing-mode="master">
+            <span class="lc-emoji">🎚️</span>
+            <span class="lc-name">Music Master</span>
+            <span class="lc-desc">Intelligent mastering for an existing track</span>
+          </button>
+        </div>
+      </section>
+      <section class="landing-recent">
+        <div class="landing-recent-head">
+          <h3>Recent projects</h3>
+          <button class="btn btn-secondary btn-sm" id="landingManage">Manage projects…</button>
+        </div>
+        <div class="landing-recent-grid" id="landingRecentGrid"></div>
+      </section>
+    </div>
+
+    <!-- Wizard Stepper -->
+    <nav class="stepper" id="stepperNav">
+      <button class="stepper-step active" data-step="1"><span class="stepper-num">1</span> Setup</button>
+      <button class="stepper-step" data-step="2"><span class="stepper-num">2</span> Storyboard</button>
+      <button class="stepper-step" data-step="3"><span class="stepper-num">3</span> Studio &amp; Render</button>
+      <button class="stepper-step" data-step="4"><span class="stepper-num">4</span> Publish &amp; SEO</button>
+    </nav>
+
+    <!-- ================= STEP 1: SETUP ================= -->
+    <div class="step-panel active" id="stepPanel1">
+
+      <!-- Music Video setup: character + song & lyrics -->
+      <div id="musicSetupGroup">
+        <section class="setup-section glass-panel">
+          <div class="section-header">
+            <span class="step-badge">Character</span>
+            <h2>Choose Your Star Character</h2>
+          </div>
+          <p class="section-desc">Select a preset claymation character or upload your own to animate through the story scenes.</p>
+
+          <div class="character-setup-grid">
+            <!-- Preset Characters -->
+            <div class="preset-picker">
+              <h3>Preset Characters</h3>
+              <div class="presets-grid" id="presetsGrid">
+                <div class="loading-spinner">Loading presets...</div>
+              </div>
+            </div>
+
+            <!-- Custom Upload -->
+            <div class="upload-picker">
+              <h3>Or Upload Custom Character</h3>
+              <div class="drop-zone" id="dropZone">
+                <span class="drop-icon">＋</span>
+                <span class="drop-text">Drag &amp; drop image here or <span class="browse-link">browse</span></span>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+              </div>
+              <div class="upload-preview-container" id="uploadPreviewContainer" style="display: none;">
+                <div class="upload-preview-main">
+                  <img id="uploadPreview" src="" alt="Custom Character Preview">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveUpload">Remove Image</button>
+                </div>
+
+                <div class="character-views-section" id="characterViewsSection" style="display: none;">
+                  <h4>AI Extracted 3D Views</h4>
+                  <div class="character-views-gallery" id="characterViewsGallery">
+                    <!-- Populated dynamically via JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="sync-section glass-panel" id="syncConfigSection">
+          <div class="section-header">
+            <span class="step-badge">Song &amp; Lyrics</span>
+            <h2>Add Your Song <span class="optional-tag">(optional)</span></h2>
+          </div>
+          <p class="section-desc">Upload a track — or describe one and let Lyria 3 compose it with vocals and auto-synced lyrics. Skip this to storyboard 4 free-form scenes.</p>
+
+          <div class="sync-setup-grid">
+            <!-- Audio Source -->
+            <div class="audio-picker">
+              <div class="source-toggle">
+                <button class="source-btn active" id="btnSongUploadMode" type="button">Upload File</button>
+                <button class="source-btn" id="btnSongGenerateMode" type="button">Generate with Lyria</button>
+              </div>
+
+              <div id="songUploadPanel">
+                <div class="drop-zone" id="audioDropZone">
+                  <span class="drop-icon">♪</span>
+                  <span class="drop-text" id="audioDropText">Drag &amp; drop MP3/WAV here or <span class="browse-link">browse</span></span>
+                  <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+                </div>
+              </div>
+
+              <div id="songGeneratePanel" style="display: none;">
+                <textarea class="lyrics-input song-prompt-input" id="songPromptInput" placeholder='Describe the song, e.g. "A cheerful children&#39;s song about brushing your teeth — ukulele, glockenspiel, warm female voice"'></textarea>
+                <p class="inspector-hint" style="margin-top: 0.5rem;">Lyria composes the song's natural length from your prompt — mention "short jingle" or "full song with two verses" in the description if you want to steer it.</p>
+                <button class="btn btn-primary" id="btnGenerateSong" style="width: 100%; margin-top: 0.75rem;">Generate Song &amp; Lyrics</button>
+                <div class="audition-box" id="songAuditionBox" style="display: none;">
+                  <span class="audition-label">Preview the song before continuing:</span>
+                  <audio id="songAuditionPlayer" controls></audio>
+                  <div class="audition-actions">
+                    <button class="btn btn-secondary btn-sm" id="btnRegenerateSong">Regenerate</button>
+                    <a class="btn btn-secondary btn-sm" id="btnDownloadAuditionSong" download style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">⬇ Download Audio</a>
+                    <button class="btn btn-success btn-sm" id="btnKeepSong">Use This Song</button>
+                  </div>
+                </div>
+                <p class="voiceover-status" id="songStatus">Lyria composes the song with vocals; lyrics are transcribed and time-synced automatically.</p>
+              </div>
+
+              <div class="audio-preview-container" id="audioPreviewContainer" style="display: none;">
+                <div class="audio-info">
+                  <span class="audio-file-icon">♪</span>
+                  <div class="audio-meta">
+                    <span class="audio-filename" id="audioFilenameText">song.mp3</span>
+                    <span class="audio-duration" id="audioDurationText">Duration: 0.0s</span>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <a class="btn btn-secondary btn-sm" id="btnDownloadAudio" download style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">⬇ Download Audio</a>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btnRemoveAudio">Remove Audio</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lyrics Input -->
+            <div class="lyrics-picker">
+              <h3>Song Lyrics</h3>
+              <div class="lyrics-toggle-container">
+                <label class="chk-label">
+                  <input type="checkbox" id="chkAutoTranscribe">
+                  <span>Auto-transcribe lyrics from uploaded audio track</span>
+                </label>
+              </div>
+              <textarea class="lyrics-input" id="lyricsInput" placeholder="Paste the song lyrics here, or generate a song with Lyria to fill them automatically..."></textarea>
+              <button class="btn btn-primary" id="btnGenerateScript" style="margin-top: 1rem; width: 100%;">
+                Generate Script with AI
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Explainer setup: prompt only -->
+      <section class="sync-section glass-panel" id="explainerConfigSection" style="display: none;">
+        <div class="section-header">
+          <span class="step-badge">Prompt Setup</span>
+          <h2>Describe the Video You Want</h2>
+        </div>
+        <p class="section-desc">Type any video idea — Gemini plans the scenes and narration, Omni Flash generates the visuals, and an AI voice can narrate it over Lyria background music.</p>
+
+        <!-- Content brief carried from a Trend Radar / planner idea (review before generating) -->
+        <div class="brief-review" id="explainerBriefPanel" style="display: none;">
+          <div class="brief-head">
+            <span class="brief-badge">Content brief carried in</span>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnClearBrief">Clear &amp; start blank</button>
+          </div>
+          <p class="inspector-hint">This is what will guide the storyboard. Edit anything before you generate — the scenes will follow it.</p>
+          <div class="form-group">
+            <label>Unique angle</label>
+            <input type="text" id="briefAngle" class="text-input">
+          </div>
+          <div class="form-group">
+            <label>Opening hook (becomes Scene 1)</label>
+            <input type="text" id="briefHook" class="text-input">
+          </div>
+          <div class="form-group">
+            <label>Target audience</label>
+            <input type="text" id="briefAudience" class="text-input">
+          </div>
+          <div class="form-group">
+            <label>Key points the video must cover (one per line)</label>
+            <textarea id="briefKeyPoints" class="lyrics-input" style="min-height: 110px;"></textarea>
+          </div>
+        </div>
+
+        <div class="explainer-setup-grid">
+          <label class="setup-field-label" for="explainerTopicInput">Video topic</label>
+          <textarea class="lyrics-input" id="explainerTopicInput" placeholder='e.g. "Video explaining how an LLM works" or "The history of coffee in 60 seconds"'></textarea>
+          <div class="explainer-options-row">
+            <div class="form-group">
+              <label>Target Length:</label>
+              <select id="explainerDuration" class="select-input">
+                <option value="30">30 seconds (Shorts)</option>
+                <option value="60" selected>60 seconds</option>
+                <option value="90">90 seconds</option>
+                <option value="120">2 minutes</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Visual Style:</label>
+              <select id="explainerStyle" class="select-input">
+                <option value="modern 3D animated explainer style, colorful, clean infographic aesthetics" selected>3D Animated Explainer</option>
+                <option value="minimalist flat 2D motion-graphics style, bold shapes, pastel palette">Flat Motion Graphics</option>
+                <option value="3D claymation style, playful, handcrafted look">Claymation</option>
+                <option value="cinematic photorealistic style, dramatic lighting">Cinematic Realistic</option>
+                <option value="retro pixel-art animation style, vibrant 16-bit colors">Pixel Art</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btnGenerateExplainerPlan" style="width: 100%;">
+            Generate Video Plan with AI
+          </button>
+        </div>
+      </section>
+
+      <div class="step-nav-row">
+        <button class="btn btn-secondary btn-lg" id="btnToStep2">Continue to Storyboard →</button>
+      </div>
+    </div>
+
+    <!-- ================= STEP 2: STORYBOARD ================= -->
+    <div class="step-panel" id="stepPanel2">
+      <section class="storyboard-section glass-panel">
+        <div class="section-header">
+          <span class="step-badge">Storyboard</span>
+          <h2>Review &amp; Generate Scenes</h2>
+        </div>
+        <p class="section-desc" id="storyboardDesc">Edit prompts for each scene, then generate them individually or as a coherent chain.</p>
+
+        <div class="compile-actions">
+          <button class="btn btn-secondary btn-lg" id="btnCoherenceCheck" style="margin-right: 1rem;">
+            Continuity Check
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btnRealismCheck" style="margin-right: 1rem;">
+            Check Video Realism
+          </button>
+          <button class="btn btn-secondary btn-lg" id="btnGenerateAll" disabled style="margin-right: 1rem;">
+            Generate All Scenes
+          </button>
+          <button class="btn btn-primary btn-lg" id="btnCompile" disabled style="display: none;">
+            Compile Music Video
+          </button>
+          <span class="compile-status-text" id="compileStatusText">Generate all scenes to unlock rendering.</span>
+        </div>
+
+        <div class="auto-realism-row">
+          <label class="chk-label">
+            <input type="checkbox" id="chkAutoRealism">
+            <span>Auto-check realism after generating all, and fix low-scoring clips once</span>
+          </label>
+          <label class="threshold-label">Fix if score below
+            <input type="number" id="realismThreshold" value="6" min="1" max="9" class="number-input threshold-input">
+          </label>
+        </div>
+
+        <div class="storyboard-grid" id="storyboardGrid">
+          <!-- Generates scenes dynamically via JS -->
+        </div>
+      </section>
+
+      <div class="step-nav-row">
+        <button class="btn btn-secondary btn-lg" id="btnToStep3">Continue to Studio →</button>
+      </div>
+    </div>
+
+    <!-- ================= STEP 3: STUDIO & RENDER ================= -->
+    <div class="step-panel" id="stepPanel3">
+      <section class="nle-section glass-panel" id="nleStudioSection">
+        <div class="nle-header">
+          <div class="nle-title-area">
+            <span class="step-badge">Studio</span>
+            <h2 id="nleStudioTitle">Synced Preview &amp; Render</h2>
+          </div>
+          <div class="nle-actions">
+            <div class="orientation-toggle" id="orientationToggle">
+              <button class="orientation-btn active" data-orientation="landscape" type="button">Landscape 16:9</button>
+              <button class="orientation-btn" data-orientation="vertical" type="button">Vertical 9:16</button>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btnNLEReset">Reset Timeline</button>
+            <button class="btn btn-primary btn-lg" id="btnNLECompileMaster">
+              Render Video
+            </button>
+          </div>
+        </div>
+
+        <div class="nle-workspace-grid">
+          <!-- Center Preview Canvas & Live Subtitle Display -->
+          <div class="nle-preview-container">
+            <div class="nle-canvas-wrapper" id="nleCanvasWrapper">
+              <video id="nlePreviewVideo" class="nle-video-element" playsinline muted></video>
+              <div id="nleCardOverlay" class="nle-card-overlay" style="display: none;"></div>
+              <img id="nleLogoOverlay" class="nle-logo-overlay pos-top-right" style="display: none;" alt="">
+              <div id="nleSubtitleOverlay" class="nle-subtitle-overlay"></div>
+              <audio id="nleAudioElement" style="display: none;"></audio>
+              <audio id="nleNarrationElement" style="display: none;"></audio>
+            </div>
+            <div class="nle-transport-controls">
+              <button class="btn-icon-control" id="btnNLEPlayPause">▶</button>
+              <div class="nle-time-display">
+                <span id="nleCurrentTime">00:00.00</span> / <span id="nleTotalTime">00:00.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Inspector Panel -->
+          <div class="nle-inspector-panel">
+            <div class="inspector-tabs">
+              <button class="inspector-tab active" id="tabSubtitlesBtn">Subtitles</button>
+              <button class="inspector-tab" id="tabTitleCardsBtn">Cards</button>
+              <button class="inspector-tab" id="tabVoiceoverBtn">Voiceover</button>
+              <button class="inspector-tab" id="tabMusicBtn">Music</button>
+              <button class="inspector-tab" id="tabPolishBtn">Polish</button>
+            </div>
+
+            <!-- Tab 1: Subtitle Styling -->
+            <div class="inspector-content active" id="tabSubtitlesContent">
+              <h3>Subtitle Preview Style</h3>
+              <div class="form-group">
+                <label>Position:</label>
+                <select id="nleSubPosition" class="select-input">
+                  <option value="none" selected>Disabled (No burnt-in subtitles — YouTube CC)</option>
+                  <option value="bottom">Bottom (Standard Subtitles)</option>
+                  <option value="center">Center Overlay</option>
+                  <option value="top">Top Header</option>
+                </select>
+              </div>
+              <div class="form-group-row">
+                <div class="form-group">
+                  <label>Font Size:</label>
+                  <input type="number" id="nleSubFontSize" value="32" min="16" max="64" class="number-input">
+                </div>
+                <div class="form-group">
+                  <label>Text Color:</label>
+                  <input type="color" id="nleSubTextColor" value="#ffffff" class="color-input">
+                </div>
+              </div>
+              <div class="form-group-row">
+                <div class="form-group">
+                  <label>Stroke Color:</label>
+                  <input type="color" id="nleSubStrokeColor" value="#000000" class="color-input">
+                </div>
+                <div class="form-group">
+                  <label>Background Box:</label>
+                  <input type="checkbox" id="nleSubBgBox" checked>
+                </div>
+              </div>
+              <div class="divider" style="margin: 1rem 0;"></div>
+              <button class="btn btn-secondary" id="btnDownloadSRT" style="width: 100%;">Download Subtitles (.srt)</button>
+              <p class="inspector-hint" style="margin-top: 0.5rem;">Subtitles are never burned into the video. Upload the .srt as closed captions on YouTube for accessibility and SEO.</p>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+              <h3>Subtitle Editor</h3>
+              <p class="inspector-hint">Fix wrong words or nudge timings — the preview, karaoke, render and .srt update instantly. ▶ plays that line against the track.</p>
+              <div class="sub-shift-row">
+                <span class="sub-shift-label">All lines:</span>
+                <button type="button" class="btn btn-secondary btn-sm" id="subShiftMinus">−0.2s</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="subShiftPlus">+0.2s</button>
+              </div>
+              <div id="subtitleEditor" class="subtitle-editor"></div>
+            </div>
+
+            <!-- Tab 2: Intro & Outro CTA Cards -->
+            <div class="inspector-content" id="tabTitleCardsContent" style="display: none;">
+              <h3>Brand Reference</h3>
+              <p class="inspector-hint">AI backgrounds &amp; thumbnails match, in order: the <strong>channel's brand kit</strong> (pick the channel in the top bar; set its art in the Planner), this project's own reference below, and your active character.</p>
+              <p class="voiceover-status" id="channelBrandInfo" style="display: none;"></p>
+              <div class="card-image-row">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnBrandPick">Add Album Cover / Art</button>
+                <input type="file" id="brandInput" accept="image/*" style="display: none;">
+                <img id="brandThumb" class="card-image-thumb" alt="Brand reference" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnBrandRemove" style="display: none;">Remove</button>
+              </div>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+
+              <h3>Intro Card</h3>
+              <label class="chk-label">
+                <input type="checkbox" id="nleIntroEnabled" checked> Enable Intro Title Screen (at 0s)
+              </label>
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="text" id="nleIntroTitle" placeholder="AI-generated opening hook" class="text-input" style="flex: 1; margin-bottom: 0;">
+                <input type="text" id="nleIntroSubtitle" placeholder="AI-generated supporting line" class="text-input" style="flex: 1; margin-bottom: 0;">
+              </div>
+              <div class="card-image-row">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnIntroImagePick">Add Image</button>
+                <button type="button" class="btn btn-secondary btn-sm ai-bg-btn" id="btnIntroAIBg">✦ AI Background</button>
+                <input type="file" id="introImageInput" accept="image/*" style="display: none;">
+                <img id="introImageThumb" class="card-image-thumb" alt="Intro card image" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnIntroImageRemove" style="display: none;">Remove</button>
+              </div>
+              <div class="card-style-row">
+                <select id="introImageMode" class="select-input">
+                  <option value="background" selected>Image as full background</option>
+                  <option value="badge">Small image above text</option>
+                </select>
+                <label class="chk-label"><input type="checkbox" id="introKenBurns" checked> Slow zoom</label>
+                <label class="chk-label"><input type="checkbox" id="introSubscribe"> Subscribe btn</label>
+              </div>
+              <div class="card-style-row" style="margin-top: 0.5rem; align-items: center; gap: 0.6rem;">
+                <label for="nleIntroDuration" style="font-size: 0.82rem; font-weight: 600; min-width: 110px;">Intro Duration:</label>
+                <input type="number" id="nleIntroDuration" class="number-input" min="1" max="15" step="0.5" value="4" style="width: 80px; padding: 0.3rem 0.5rem;">
+                <span class="inspector-hint" style="margin: 0; font-size: 0.8rem;">seconds</span>
+              </div>
+              <div class="card-style-row" style="margin-top: 0.5rem;">
+                <label class="chk-label"><input type="checkbox" id="introHideText"> Hide overlay text (use image background card)</label>
+              </div>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+
+              <h3>Outro CTA Card</h3>
+              <label class="chk-label">
+                <input type="checkbox" id="nleOutroEnabled" checked> Enable Outro Call-To-Action Screen
+              </label>
+              <input type="text" id="nleOutroTitle" placeholder="AI-generated next-view hook" class="text-input">
+              <input type="text" id="nleOutroCTA" placeholder="AI-generated contextual call to action" class="text-input">
+              <div class="card-image-row">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnOutroImagePick">Add Image</button>
+                <button type="button" class="btn btn-secondary btn-sm ai-bg-btn" id="btnOutroAIBg">✦ AI Background</button>
+                <input type="file" id="outroImageInput" accept="image/*" style="display: none;">
+                <img id="outroImageThumb" class="card-image-thumb" alt="Outro card image" style="display: none;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnOutroImageRemove" style="display: none;">Remove</button>
+              </div>
+              <div class="card-style-row">
+                <select id="outroImageMode" class="select-input">
+                  <option value="background" selected>Image as full background</option>
+                  <option value="badge">Small image above text</option>
+                </select>
+                <label class="chk-label"><input type="checkbox" id="outroKenBurns" checked> Slow zoom</label>
+                <label class="chk-label"><input type="checkbox" id="outroSubscribe" checked> Subscribe btn</label>
+              </div>
+              <div class="card-style-row" style="margin-top: 0.5rem; align-items: center; gap: 0.6rem;">
+                <label for="nleOutroDuration" style="font-size: 0.82rem; font-weight: 600; min-width: 110px;">Outro Duration:</label>
+                <input type="number" id="nleOutroDuration" class="number-input" min="1" max="15" step="0.5" value="4" style="width: 80px; padding: 0.3rem 0.5rem;">
+                <span class="inspector-hint" style="margin: 0; font-size: 0.8rem;">seconds</span>
+              </div>
+              <div class="card-style-row" style="margin-top: 0.5rem;">
+                <label class="chk-label"><input type="checkbox" id="outroHideText"> Hide overlay text (use image background card)</label>
+              </div>
+            </div>
+
+            <!-- Tab 3: AI Voiceover (TTS) -->
+            <div class="inspector-content" id="tabVoiceoverContent" style="display: none;">
+              <h3>AI Narration Voiceover</h3>
+              <p class="inspector-hint">Turns the narration/lyrics track into spoken audio, timed to each scene. It plays in the preview and gets mixed into the final render (music is ducked under the voice).</p>
+              <div class="form-group">
+                <label>Voice:</label>
+                <select id="nleVoiceSelect" class="select-input">
+                  <option value="Kore" selected>Kore — Warm &amp; Clear</option>
+                  <option value="Puck">Puck — Upbeat</option>
+                  <option value="Charon">Charon — Deep Narrator</option>
+                  <option value="Zephyr">Zephyr — Bright</option>
+                  <option value="Fenrir">Fenrir — Energetic</option>
+                  <option value="Leda">Leda — Youthful</option>
+                  <option value="Orus">Orus — Firm</option>
+                  <option value="Aoede">Aoede — Breezy</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btnGenerateVoiceover" style="width: 100%;">Generate AI Voiceover Track</button>
+              <p class="voiceover-status" id="voiceoverStatus">No voiceover yet. Generate a script first, then create the voiceover.</p>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+              <label class="chk-label">
+                <input type="checkbox" id="nleSpeakPreview">
+                <span>Speak narration live in preview (browser TTS, quick check only)</span>
+              </label>
+            </div>
+
+            <!-- Tab 4: AI Background Music (Lyria 3) -->
+            <div class="inspector-content" id="tabMusicContent" style="display: none;">
+              <h3>AI Background Music</h3>
+              <p class="inspector-hint">Generates an instrumental Lyria 3 track matching your video's mood. It becomes the audio bed under the narration and is auto-ducked in the final render.</p>
+              <div class="form-group">
+                <label>Mood Preset:</label>
+                <select id="musicMoodSelect" class="select-input">
+                  <option value="" selected>Auto (from video plan)</option>
+                  <option value="calm ambient documentary underscore, soft piano and warm strings, slow tempo, reflective, no vocals">Calm Documentary</option>
+                  <option value="uplifting corporate background music, light acoustic guitar and soft synths, optimistic, no vocals">Uplifting</option>
+                  <option value="epic cinematic underscore, sweeping strings and subtle percussion, inspiring build, no vocals">Epic Cinematic</option>
+                  <option value="lo-fi chillhop beat, mellow keys, vinyl warmth, relaxed head-nod groove, no vocals">Lo-fi Chill</option>
+                  <option value="playful children's background music, glockenspiel and ukulele, bouncy and happy, no vocals">Playful Kids</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Music Prompt:</label>
+                <textarea class="lyrics-input music-prompt-input" id="musicPromptInput" placeholder="Describe the background music... (auto-filled from your video plan)"></textarea>
+              </div>
+              <button class="btn btn-primary" id="btnGenerateMusic" style="width: 100%;">Generate Background Music</button>
+              <div class="audition-box" id="musicAuditionBox" style="display: none;">
+
+                <span class="audition-label">Preview before using it as the audio bed:</span>
+                <audio id="musicAuditionPlayer" controls></audio>
+                <div class="audition-actions">
+                  <button class="btn btn-secondary btn-sm" id="btnRegenerateMusic">Regenerate</button>
+                  <button class="btn btn-success btn-sm" id="btnKeepMusic">Use This Track</button>
+                </div>
+              </div>
+              <p class="voiceover-status" id="musicStatus">No AI music yet. Tip: generate the video plan first for an auto-matched prompt.</p>
+            </div>
+
+            <!-- Tab 5: Polish — finishing touches for a professional render -->
+            <div class="inspector-content" id="tabPolishContent" style="display: none;">
+              <h3>Finishing Touches</h3>
+              <p class="inspector-hint">Applied at render time: smooth scene transitions (lyric sync is preserved), audio ramps, and YouTube-standard loudness.</p>
+
+              <div class="form-group">
+                <label>Scene Transition:</label>
+                <select id="polishTransition" class="select-input">
+                  <option value="cut" selected>Hard cut (default)</option>
+                  <option value="fade">Crossfade</option>
+                  <option value="fadeblack">Fade through black</option>
+                  <option value="slideleft">Slide left</option>
+                  <option value="circleopen">Circle open</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Transition Length:</label>
+                <select id="polishTransitionDur" class="select-input">
+                  <option value="0.3">0.3s — snappy</option>
+                  <option value="0.5" selected>0.5s — smooth</option>
+                  <option value="1">1s — slow &amp; cinematic</option>
+                </select>
+              </div>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+
+              <label class="chk-label">
+                <input type="checkbox" id="polishMusicFadeIn" checked>
+                <span>Music fades in at the start (grows from silence)</span>
+              </label>
+              <div class="form-group">
+                <label>Fade-in Length:</label>
+                <select id="polishFadeInDur" class="select-input">
+                  <option value="2" selected>2 seconds</option>
+                  <option value="3">3 seconds</option>
+                  <option value="5">5 seconds</option>
+                </select>
+              </div>
+              <label class="chk-label">
+                <input type="checkbox" id="polishAudioFadeOut" checked>
+                <span>Audio fades out at the end (3s)</span>
+              </label>
+              <label class="chk-label">
+                <input type="checkbox" id="polishLoudnorm" checked>
+                <span>Normalize loudness for YouTube (−14 LUFS)</span>
+              </label>
+              <label class="chk-label">
+                <input type="checkbox" id="polishVideoFadeOut">
+                <span>Fade video to black at the end</span>
+              </label>
+
+              <div class="divider" style="margin: 1rem 0;"></div>
+
+              <h3>Channel Logo Watermark</h3>
+              <p class="inspector-hint">Your channel logo stays on screen during the entire video — cards and scenes. Generate one with AI or upload your own (PNG with transparency works best).</p>
+              <label class="chk-label">
+                <input type="checkbox" id="logoEnabled">
+                <span>Show channel logo during the whole video</span>
+              </label>
+              <div class="logo-preview-row">
+                <img id="logoThumb" class="logo-thumb" style="display: none;" alt="">
+                <span id="logoStatus" class="inspector-hint" style="margin: 0;">No logo yet.</span>
+              </div>
+              <div class="btn-row" style="display: flex; gap: 0.5rem; margin: 0.5rem 0;">
+                <button class="btn btn-secondary btn-sm" id="btnGenerateLogo">✦ Generate Logo (AI)</button>
+                <button class="btn btn-secondary btn-sm" id="btnUploadLogo">Upload Logo</button>
+                <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
+              </div>
+              <div class="form-group">
+                <label>Position:</label>
+                <select id="logoPosition" class="select-input">
+                  <option value="top-right" selected>Top right</option>
+                  <option value="top-left">Top left</option>
+                  <option value="bottom-right">Bottom right</option>
+                  <option value="bottom-left">Bottom left</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Size:</label>
+                <select id="logoSize" class="select-input">
+                  <option value="0.08">Small</option>
+                  <option value="0.12" selected>Medium</option>
+                  <option value="0.18">Large</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Opacity:</label>
+                <select id="logoOpacity" class="select-input">
+                  <option value="0.6">60% — subtle</option>
+                  <option value="0.85" selected>85% — standard</option>
+                  <option value="1">100% — solid</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multitrack NLE Timeline Container -->
+        <div class="nle-timeline-container">
+          <div class="timeline-header-bar">
+            <span class="timeline-title">Multitrack Timeline</span>
+            <div class="timeline-zoom-controls">
+              <button class="btn btn-secondary btn-sm" id="btnZoomOut">−</button>
+              <button class="btn btn-secondary btn-sm" id="btnZoomIn">+</button>
+            </div>
+          </div>
+
+          <div class="timeline-viewport" id="timelineViewport">
+            <!-- Playhead Scrubber Line -->
+            <div class="timeline-playhead" id="timelinePlayhead">
+              <div class="playhead-head"></div>
+              <div class="playhead-line"></div>
+            </div>
+
+            <!-- Track 1: Intro & Outro Cards Track -->
+            <div class="timeline-track" id="trackTitleCards">
+              <div class="track-label">Title Cards</div>
+              <div class="track-content" id="contentTitleCards"></div>
+            </div>
+
+            <!-- Track 2: Lyrics / Narration Track -->
+            <div class="timeline-track" id="trackLyrics">
+              <div class="track-label" id="trackLyricsLabel">Lyrics</div>
+              <div class="track-content" id="contentLyrics"></div>
+            </div>
+
+            <!-- Track 3: Omni Flash Scenes Track -->
+            <div class="timeline-track" id="trackScenes">
+              <div class="track-label">Video Scenes</div>
+              <div class="track-content" id="contentScenes"></div>
+            </div>
+
+            <!-- Track 4: Audio Waveform Track -->
+            <div class="timeline-track" id="trackAudio">
+              <div class="track-label">Audio</div>
+              <div class="track-content" id="contentAudio">
+                <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rendered master video output -->
+      <section class="compilation-section glass-panel" id="compilationSection">
+        <p class="section-desc" id="compilationDesc" style="display: none;"></p>
+        <div class="merged-video-display" id="mergedVideoDisplay" style="display: none;">
+          <h3>Your Video Is Ready</h3>
+          <div class="final-video-container">
+            <video id="finalVideo" controls></video>
+          </div>
+          <div class="final-actions">
+            <a id="downloadLink" href="#" download="my_ai_video.mp4" class="btn btn-success">
+              Download Video
+            </a>
+            <button class="btn btn-secondary" id="btnUploadToGCS">
+              ☁️ Upload to GCS
+            </button>
+            <button class="btn btn-secondary" id="btnAddToPlanner">
+              Add to Planner
+            </button>
+            <button class="btn btn-secondary" id="btnResetAll">
+              Restart Studio
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="step-nav-row">
+        <button class="btn btn-secondary btn-lg" id="btnToStep4">Continue to Publish →</button>
+      </div>
+    </div>
+
+    <!-- ================= MUSIC MASTER (intelligent mastering engine) ================= -->
+    <div id="masterSection" style="display: none;">
+      <section class="glass-panel">
+        <div class="section-header">
+          <span class="step-badge">Master</span>
+          <h2>Intelligent Mastering Engine</h2>
+        </div>
+        <p class="section-desc">Enhance any track like a mastering studio: the engine measures your audio first, then applies style EQ, glue compression, stereo enhancement and an exact loudness correction — ready for streaming platforms.</p>
+
+        <div class="master-src-row">
+          <input type="file" id="masterFileInput" accept="audio/*" style="display: none;">
+          <button class="btn btn-secondary" id="btnMasterUpload">Upload Track</button>
+          <button class="btn btn-secondary" id="btnMasterUseProject">Use Current Project Track</button>
+          <span class="voiceover-status" id="masterSourceName">No track loaded yet.</span>
+        </div>
+
+        <div class="explainer-options-row" style="margin-top: 1rem;">
+          <div class="form-group">
+            <label>Mastering Style:</label>
+            <select id="masterStyle" class="select-input">
+              <option value="balanced" selected>Balanced — transparent glue</option>
+              <option value="warm">Warm &amp; Smooth — fuller lows</option>
+              <option value="bright">Bright &amp; Open — crisp highs</option>
+              <option value="punchy">Loud &amp; Punchy — max energy</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Loudness:</label>
+            <select id="masterTarget" class="select-input">
+              <option value="-14" selected>−14 LUFS — Streaming (YouTube/Spotify)</option>
+              <option value="-11">−11 LUFS — Loud</option>
+              <option value="-9.5">−9.5 LUFS — Club / Max</option>
+            </select>
+          </div>
+        </div>
+        <label class="chk-label" style="margin-top: 0.5rem;">
+          <input type="checkbox" id="masterWiden" checked>
+          <span>Stereo enhancement (subtle widening, mono-safe level)</span>
+        </label>
+
+        <button class="btn btn-primary btn-lg" id="btnMasterTrack" style="margin-top: 1rem;">Master Track</button>
+        <p class="voiceover-status" id="masterStatus"></p>
+
+        <div class="master-result" id="masterResult" style="display: none;">
+          <div class="divider" style="margin: 1.25rem 0;"></div>
+          <h3>A / B Comparison</h3>
+          <div class="ab-grid">
+            <div class="ab-item">
+              <span class="ab-label">A — Original</span>
+              <audio id="masterAudioA" controls></audio>
+            </div>
+            <div class="ab-item">
+              <span class="ab-label">B — Mastered</span>
+              <audio id="masterAudioB" controls></audio>
+            </div>
+          </div>
+          <div class="master-report" id="masterReport"></div>
+          <div class="final-actions" style="margin-top: 1rem;">
+            <a class="btn btn-success" id="masterDownload" href="#" download>Download Mastered WAV</a>
+            <button class="btn btn-secondary" id="btnMasterUseResult">Use As Project Audio</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= CONTENT PLANNER (cross-project view) ================= -->
+    <div id="plannerView" style="display: none;">
+      <section class="glass-panel planner-section">
+        <div class="section-header">
+          <span class="step-badge">Planner</span>
+          <h2>Content Planner &amp; Channels</h2>
+        </div>
+        <p class="section-desc">Track every video across your YouTube channels and Instagram accounts — and let the viral topics agent plan what to make next.</p>
+
+        <div class="channel-chips" id="channelChips"></div>
+
+        <div class="planner-toolbar">
+          <select id="plannerChannelFilter" class="select-input" style="max-width: 240px;">
+            <option value="">All Channels</option>
+          </select>
+          <select id="plannerStatusFilter" class="select-input" style="max-width: 160px;">
+            <option value="">All Statuses</option>
+          </select>
+          <select id="plannerSort" class="select-input" style="max-width: 170px;" title="Sort the video list">
+            <option value="schedule" selected>Sort: Scheduled</option>
+            <option value="roi">Sort: Best ROI</option>
+            <option value="newest">Sort: Newest</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" id="btnAddChannel">Add Channel</button>
+          <button class="btn btn-secondary btn-sm" id="btnAddVideoManual">Add Video</button>
+          <button class="btn btn-primary btn-sm" id="btnSuggestChannel">Suggest Channel (AI)</button>
+          <button class="btn btn-primary btn-sm" id="btnSuggestIdeas">Suggest Viral Ideas (AI)</button>
+          <button class="btn btn-secondary btn-sm" id="btnRefreshStats" title="Pull real views/likes for published videos from YouTube">Refresh Stats</button>
+          <label class="chk-label trends-toggle"><input type="checkbox" id="chkUseTrends" checked> <span>Use live trends</span></label>
+        </div>
+        <p class="voiceover-status" id="trendsUsedNote" style="display: none;"></p>
+
+        <!-- Channel Manager: names, niches, brand kits & logos in one place -->
+        <details class="planner-collapse" id="channelMgrCollapse">
+        <summary><span class="pc-icon">🗂</span> Channel Manager <span class="pc-hint">edit names, niches, types, brand kits &amp; logos</span></summary>
+        <div id="channelManager" style="margin-top: 0.6rem;"></div>
+        <input type="file" id="cmFileInput" accept="image/*" style="display: none;">
+        </details>
+
+        <!-- Viral Trend Radar (collapsed by default — the video list is the main view) -->
+        <details class="planner-collapse" id="radarCollapse">
+        <summary><span class="pc-icon">📡</span> Multi-Source Viral Trend Radar <span class="pc-hint">scan Reddit, HN, Wikipedia, News, Trends &amp; YouTube for topic convergences</span></summary>
+        <div class="trend-radar-box glass-panel" style="margin-top: 0.6rem; padding: 1.2rem; background: rgba(15, 23, 42, 0.6);">
+          <div class="section-header" style="margin-bottom: 0.8rem;">
+            <span class="step-badge" style="background: rgba(236, 72, 153, 0.2); color: #ec4899; border-color: rgba(236, 72, 153, 0.4);">Live Intelligence</span>
+            <h3 style="font-size: 1.15rem; margin: 0; color: #fff;">Multi-Source Viral Trend Radar</h3>
+          </div>
+          <p class="section-desc" style="margin-bottom: 0.8rem; font-size: 0.85rem;">
+            Scans cross-platform signals across Reddit subreddits, Hacker News, Wikipedia Top-Read, Google News RSS, and Google Trends to identify high-potential topic convergences.
+          </p>
+
+          <div class="radar-source-controls">
+            <div class="source-toggles-row" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+              <label class="chk-label"><input type="checkbox" id="chkSourceReddit" checked> <span>Reddit Multi-Sub</span></label>
+              <label class="chk-label"><input type="checkbox" id="chkSourceHN" checked> <span>Hacker News</span></label>
+              <label class="chk-label"><input type="checkbox" id="chkSourceWiki" checked> <span>Wikipedia Top-Read</span></label>
+              <label class="chk-label"><input type="checkbox" id="chkSourceNews" checked> <span>Google News</span></label>
+              <label class="chk-label"><input type="checkbox" id="chkSourceTrends" checked> <span>Google Trends</span></label>
+              <label class="chk-label"><input type="checkbox" id="chkSourceYouTube" checked> <span>YouTube Popular</span></label>
+            </div>
+
+            <div class="radar-inputs-row" style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <input type="text" id="radarSubredditsInput" class="text-input" style="flex: 1; min-width: 220px;" placeholder="Subreddits (e.g. AskReddit, explainlikeimfive, todayilearned)" value="AskReddit, explainlikeimfive, todayilearned, technology">
+              <input type="text" id="radarNewsQueryInput" class="text-input" style="flex: 1; min-width: 160px;" placeholder="News query (e.g. AI, space, science)" value="technology">
+              <button class="btn btn-primary btn-sm" id="btnScanRadar">📡 Scan Live Trend Radar</button>
+            </div>
+          </div>
+
+          <div id="radarResultsContainer" style="display: none; margin-top: 1rem;">
+            <div class="radar-summary-alert" id="radarSummaryAlert" style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: #e2e8f0; margin-bottom: 1rem;"></div>
+            <div class="radar-topics-grid" id="radarTopicsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;"></div>
+          </div>
+        </div>
+        </details>
+
+        <!-- Channel opportunity finder results -->
+        <div class="channel-suggest-box" id="channelSuggestBox" style="display: none;">
+          <div class="planner-form" style="display: flex;">
+            <input type="text" id="channelInterestsInput" class="text-input" placeholder="Your interests (optional, e.g. space, cooking, finance)">
+            <button class="btn btn-primary btn-sm" id="btnRunChannelSuggest">Find Channel Ideas</button>
+            <button class="btn btn-secondary btn-sm" id="btnCloseChannelSuggest">Close</button>
+          </div>
+          <p class="voiceover-status" id="channelSuggestNote" style="display: none;"></p>
+          <div class="channel-suggest-grid" id="channelSuggestGrid"></div>
+        </div>
+
+        <!-- Trend Watch: scheduled trends agent (collapsed by default) -->
+        <details class="planner-collapse" id="twCollapse">
+        <summary><span class="pc-icon">⏰</span> Trend Watch Agent <span class="tw-status off" id="twStatusChip">Off</span> <span class="pc-hint">finds fresh ideas on a schedule &amp; sends digests</span></summary>
+        <div class="trend-watch-box" id="trendWatchBox">
+          <div class="tw-head">
+            <h3>Trend Watch Agent</h3>
+            <span class="tw-status off" id="twStatus">Off</span>
+          </div>
+          <p class="inspector-hint">Runs on a schedule while the studio server is up: checks live trends, adds fresh ideas for every channel (tagged <strong>Trend Watch</strong>), and sends you a digest — email if SMTP is configured in .env, plus a macOS notification.</p>
+          <div class="tw-controls">
+            <label class="chk-label"><input type="checkbox" id="twEnabled"> <span>Enabled</span></label>
+            <label class="threshold-label">Every
+              <select id="twInterval" class="select-input" style="width: auto;">
+                <option value="1">1</option>
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+                <option value="12">12</option>
+                <option value="24">24</option>
+              </select>
+              hours
+            </label>
+            <button class="btn btn-secondary btn-sm" id="btnTwRunNow">Run Now</button>
+          </div>
+          <p class="voiceover-status" id="twInfo"></p>
+          <div class="tw-digest" id="twDigest"></div>
+        </div>
+        </details>
+
+        <!-- Inline Add Channel form -->
+        <div class="planner-form" id="channelForm" style="display: none;">
+          <input type="text" id="channelNameInput" class="text-input" placeholder="Channel name (e.g. KidsTunes TV)">
+          <select id="channelPlatformInput" class="select-input">
+            <option value="youtube" selected>YouTube</option>
+            <option value="instagram">Instagram</option>
+          </select>
+          <input type="text" id="channelNicheInput" class="text-input" placeholder="Niche (e.g. children's songs / tech explainers)">
+          <select id="channelTypeInput" class="select-input" title="Music channels open ideas in the song + character flow; explainer channels use the narrated flow">
+            <option value="" selected>Type: Auto-detect</option>
+            <option value="music">🎵 Music videos (song + characters)</option>
+            <option value="explainer">🎬 Explainer / narration</option>
+          </select>
+          <input type="text" id="channelSubredditInput" class="text-input" placeholder="Related subreddit (optional, e.g. explainlikeimfive)">
+          <button class="btn btn-primary btn-sm" id="btnSaveChannel">Save Channel</button>
+          <button class="btn btn-secondary btn-sm" id="btnCancelChannel">Cancel</button>
+        </div>
+
+        <!-- Inline Add Video form -->
+        <div class="planner-form" id="videoForm" style="display: none;">
+          <input type="text" id="videoTitleInput" class="text-input" placeholder="Video title">
+          <select id="videoChannelInput" class="select-input"></select>
+          <select id="videoFormatInput" class="select-input">
+            <option value="long" selected>YouTube Long</option>
+            <option value="short">YouTube Short</option>
+            <option value="reel">Instagram Reel</option>
+          </select>
+          <input type="date" id="videoDateInput" class="text-input">
+          <button class="btn btn-primary btn-sm" id="btnSaveVideo">Save Video</button>
+          <button class="btn btn-secondary btn-sm" id="btnCancelVideo">Cancel</button>
+        </div>
+
+        <p class="voiceover-status" id="plannerStrategyNote" style="display: none;"></p>
+
+        <div class="planner-table-wrap">
+          <table class="planner-table">
+            <thead>
+              <tr>
+                <th style="width: 92px;">Added</th>
+                <th style="width: 130px;">Scheduled</th>
+                <th>Title</th>
+                <th style="width: 140px;">Channel</th>
+                <th style="width: 100px;">Format</th>
+                <th style="width: 95px;">Est. ROI</th>
+                <th style="width: 130px;">Status</th>
+                <th style="width: 190px;"></th>
+              </tr>
+            </thead>
+            <tbody id="plannerTableBody"></tbody>
+          </table>
+          <p class="section-desc" id="plannerEmptyHint" style="margin-top: 1rem;">No videos planned yet. Add a channel, then let the AI suggest viral ideas.</p>
+        </div>
+        <nav class="planner-pagination" id="plannerPagination" aria-label="Suggested videos pages"></nav>
+
+        <!-- Autopilot queue: hands-free production runs -->
+        <div class="autopilot-box" id="autopilotBox">
+          <div class="section-header" style="margin-bottom: 0.4rem;">
+            <span class="step-badge">Autopilot</span>
+            <h2 style="font-size: 1.05rem;">Production Queue</h2>
+          </div>
+          <p class="section-desc">Hit 🚀 Autopilot on any idea: the full chain runs unattended on this Mac — script → music → voiceover → scenes → realism check → render → SEO + chapters → thumbnail → YouTube upload, scheduled to go public at your chosen slot. Jobs run one at a time.</p>
+
+          <div class="fa-config">
+            <h3 style="font-size: 0.95rem; margin: 0.8rem 0 0.2rem;">🤖 Full Autopilot — channels that produce themselves</h3>
+            <p class="section-desc">Turn it on per channel and Autopilot continuously produces that channel's <strong>best unused ideas by estimated ROI</strong>, one after another, with no weekly or daily limit. Turn the channel off whenever you want it to stop. You get a Mac notification (and email, if SMTP is set) when a video is scheduled, ready, or failed.</p>
+            <div id="fullAutopilotChannels"></div>
+            <div class="fa-global-actions">
+              <button class="btn btn-secondary btn-sm" id="btnFaScanNow">Scan now</button>
+              <button class="btn btn-danger btn-sm" id="btnFaDrain" data-draining="false">Stop after outstanding jobs</button>
+              <span class="inspector-hint" id="faScanStatus"></span>
+            </div>
+            <p class="fa-drain-status" id="faDrainStatus" aria-live="polite"></p>
+          </div>
+
+          <div class="divider" style="margin: 1rem 0;"></div>
+          <div id="autopilotQueue"><p class="section-desc">No Autopilot jobs yet.</p></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Autopilot launch modal -->
+    <!-- Projects Manager modal -->
+    <div class="ap-modal-backdrop" id="pmModalBackdrop" style="display: none;">
+      <div class="ap-modal pm-modal">
+        <div class="pm-modal-head">
+          <h3>🗂 Manage Projects</h3>
+          <button class="btn btn-secondary btn-sm" id="pmClose">Close</button>
+        </div>
+        <p class="section-desc" id="pmSummary"></p>
+        <div class="pm-list" id="pmList"></div>
+        <div class="pm-modal-actions">
+          <button class="btn btn-secondary btn-sm" id="pmSyncMedia" title="Upload this Mac's video/audio files to the cloud so your other Mac can load them">☁️ Sync media to cloud</button>
+          <button class="btn btn-secondary btn-sm" id="pmCleanEmpty">Delete empty projects</button>
+        </div>
+        <p class="section-desc" id="pmSyncStatus" style="margin: 0.4rem 0 0; min-height: 1em;"></p>
+      </div>
+    </div>
+
+    <div class="ap-modal-backdrop" id="apModalBackdrop" style="display: none;">
+      <div class="ap-modal">
+        <h3>🚀 Autopilot this video</h3>
+        <p class="section-desc" id="apModalIdea"></p>
+        <div class="form-group">
+          <label>Go public on YouTube at:</label>
+          <input type="datetime-local" id="apPublishAt" class="text-input">
+          <p class="inspector-hint" style="margin: 0.25rem 0 0;">Uploads private first — YouTube flips it public at this exact time.</p>
+        </div>
+        <div class="ap-modal-grid">
+          <div class="form-group">
+            <label>Length:</label>
+            <select id="apDuration" class="select-input">
+              <option value="30">~30 seconds</option>
+              <option value="60" selected>~1 minute</option>
+              <option value="90">~1.5 minutes</option>
+              <option value="120">~2 minutes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Orientation:</label>
+            <select id="apOrientation" class="select-input">
+              <option value="landscape" selected>Landscape 16:9</option>
+              <option value="vertical">Vertical 9:16</option>
+            </select>
+          </div>
+          <div class="form-group" id="apVoiceGroup">
+            <label>Voice:</label>
+            <select id="apVoice" class="select-input">
+              <option value="Puck" selected>Puck (upbeat)</option>
+              <option value="Kore">Kore (warm)</option>
+              <option value="Charon">Charon (deep)</option>
+              <option value="Fenrir">Fenrir (strong)</option>
+              <option value="Aoede">Aoede (bright)</option>
+              <option value="Leda">Leda (soft)</option>
+            </select>
+          </div>
+          <div class="form-group" id="apCharacterGroup" style="display: none;">
+            <label>Star character:</label>
+            <select id="apCharacter" class="select-input"></select>
+          </div>
+        </div>
+        <p class="inspector-hint" id="apPipelineNote" style="display: none;">🎵 Music channel: Lyria composes the song (it picks the natural length), lyrics are transcribed, and the character stars in every scene.</p>
+        <label class="chk-label"><input type="checkbox" id="apBurnSubtitles"> Burn subtitles into master video (YouTube auto-generates CC)</label>
+        <label class="chk-label"><input type="checkbox" id="apMusic" checked><span>Background music (Lyria)</span></label>
+        <label class="chk-label"><input type="checkbox" id="apRealism" checked><span>Realism check (auto-fix weak scenes)</span></label>
+        <label class="chk-label"><input type="checkbox" id="apUpload" checked><span>Upload to YouTube &amp; schedule (needs the YouTube connection)</span></label>
+        <div class="btn-row" style="display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: flex-end;">
+          <button class="btn btn-secondary" id="apCancel">Cancel</button>
+          <button class="btn btn-primary" id="apLaunch">Queue the job</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= STEP 4: PUBLISH & SEO ================= -->
+    <div class="step-panel" id="stepPanel4">
+      <section class="seo-section glass-panel" id="seoSection">
+        <div class="section-header">
+          <span class="step-badge">YouTube Kit</span>
+          <h2>SEO &amp; Monetization Kit</h2>
+        </div>
+        <p class="section-desc">Generate ready-to-paste titles, description, tags, hashtags, chapters and thumbnail ideas optimized for YouTube search and monetization.</p>
+        <button class="btn btn-primary" id="btnGenerateSEO">Generate YouTube SEO Kit</button>
+        <div class="seo-results" id="seoResults"></div>
+      </section>
+
+      <!-- AI Thumbnails -->
+      <section class="glass-panel seo-section">
+        <div class="section-header">
+          <span class="step-badge">Thumbnails</span>
+          <h2>AI Thumbnails</h2>
+        </div>
+        <p class="section-desc">Turns the SEO kit's thumbnail concepts into real images (generate the kit first for best results). Thumbnails drive CTR more than anything else on YouTube.</p>
+        <button class="btn btn-primary" id="btnGenerateThumbs">Generate Thumbnails</button>
+        <p class="voiceover-status" id="thumbStatus"></p>
+        <div class="thumb-grid" id="thumbGrid"></div>
+      </section>
+
+      <!-- YouTube chapter markers -->
+      <section class="glass-panel seo-section" id="chaptersSection">
+        <div class="section-header">
+          <span class="step-badge">Chapters</span>
+          <h2>YouTube Chapter Markers</h2>
+        </div>
+        <p class="section-desc">Auto-built from your storyboard timings — paste-ready chapter stamps that give the player a segmented progress bar and boost search visibility. They're appended to the description automatically when you upload. Edit the titles freely; keep the first stamp at <strong>00:00</strong> and chapters at least 10 seconds apart (YouTube's rules).</p>
+        <textarea id="chapterText" class="lyrics-input" style="min-height: 120px; font-family: var(--font-mono, monospace);" spellcheck="false" placeholder="Chapters appear here once your storyboard has timed scenes."></textarea>
+        <div class="btn-row" style="display: flex; gap: 0.5rem; margin-top: 0.6rem;">
+          <button class="btn btn-secondary btn-sm" id="btnChaptersRefresh">↻ Rebuild from Storyboard</button>
+          <button class="btn btn-secondary btn-sm" id="btnChaptersCopy">Copy</button>
+        </div>
+        <p class="voiceover-status" id="chapterStatus"></p>
+      </section>
+
+      <!-- Auto-Shorts: vertical highlight cuts from the master render -->
+      <section class="glass-panel seo-section" id="shortsSection">
+        <div class="section-header">
+          <span class="step-badge">Shorts</span>
+          <h2>Auto-Shorts — Vertical Highlights</h2>
+        </div>
+        <p class="section-desc">AI picks the strongest moments of your rendered video (hook, chorus, best lines), cuts them and converts to <strong>9:16 vertical Shorts</strong> — subtitles, logo and audio already baked in. Shorts are YouTube's discovery engine: post them to funnel viewers into the full video.</p>
+        <div class="btn-row" style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+          <select id="shortsCount" class="select-input" style="width: auto;">
+            <option value="1">1 Short</option>
+            <option value="2" selected>2 Shorts</option>
+            <option value="3">3 Shorts</option>
+          </select>
+          <select id="shortsStyle" class="select-input" style="width: auto;">
+            <option value="blur" selected>Blurred background (full frame visible)</option>
+            <option value="crop">Center crop (fills the screen)</option>
+          </select>
+          <button class="btn btn-primary" id="btnGenerateShorts">Generate Shorts</button>
+        </div>
+        <p class="voiceover-status" id="shortsStatus">Render the master video in the Studio first.</p>
+        <div class="shorts-grid" id="shortsGrid"></div>
+      </section>
+
+      <!-- Global Reach: multi-language localization -->
+      <section class="glass-panel seo-section" id="localizeSection">
+        <div class="section-header">
+          <span class="step-badge">Global Reach</span>
+          <h2>Localize — One Video, Many Markets</h2>
+        </div>
+        <p class="section-desc">Translate the narration, generate a native AI voiceover, and produce captions + localized metadata per language. Upload your video once, then add these as YouTube <strong>multi-language audio &amp; caption tracks</strong> — reaching several markets from a single upload (the visuals are language-neutral).</p>
+        <div class="lang-picker" id="langPicker"></div>
+        <button class="btn btn-primary" id="btnLocalize" style="margin-top: 0.8rem;">Generate Localizations</button>
+        <p class="voiceover-status" id="localizeStatus">Pick languages above. Needs a script/narration (Explainer) or lyrics with timings.</p>
+        <div class="localize-results" id="localizeResults"></div>
+      </section>
+
+      <!-- Publish Package -->
+      <section class="glass-panel seo-section">
+        <div class="section-header">
+          <span class="step-badge">Package</span>
+          <h2>Publish Package</h2>
+        </div>
+        <p class="section-desc">One zip with everything to upload: the rendered video, subtitles.srt for closed captions, youtube-metadata.txt (title, description, tags, chapters) and any generated thumbnails.</p>
+        <div class="btn-row" style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+          <button class="btn btn-success" id="btnExportPackage">Download Publish Package (.zip)</button>
+          <button class="btn btn-secondary" id="btnArchiveLibrary" title="Uploads master + thumbnails + Shorts + subtitles + metadata to gs://…/library/<channel>/<date>_<video>/">☁️ Archive to Cloud Library</button>
+        </div>
+        <p class="voiceover-status" id="packageStatus">Render the video in the Studio first.</p>
+        <p class="voiceover-status" id="archiveStatus"></p>
+      </section>
+
+      <!-- Direct upload to YouTube -->
+      <section class="glass-panel seo-section" id="youtubeSection">
+        <div class="section-header">
+          <span class="step-badge">Upload</span>
+          <h2>Publish to YouTube</h2>
+        </div>
+        <p class="section-desc">Upload the rendered video straight to your channel — with title, description, tags, thumbnail and captions. Defaults to <strong>Private</strong> so you review it in YouTube Studio before going public.</p>
+
+        <div id="ytConnectRow">
+          <div class="form-group" style="max-width: 420px;">
+            <label for="ytChannelSelect">YouTube destination</label>
+            <select id="ytChannelSelect" class="select-input"></select>
+          </div>
+          <p class="voiceover-status" id="ytStatus">Checking connection…</p>
+          <button class="btn btn-secondary" id="btnYtConnect" type="button" style="display:none;">Connect in System Browser</button>
+          <button class="btn btn-secondary btn-sm" id="btnYtDisconnect" style="display:none;">Disconnect</button>
+        </div>
+
+        <div id="ytUploadForm" style="display:none; margin-top: 1rem;">
+          <div class="form-group"><label>Title</label><input type="text" id="ytTitle" class="text-input" maxlength="100"></div>
+          <div class="form-group"><label>Description</label><textarea id="ytDescription" class="lyrics-input" style="min-height:90px;"></textarea></div>
+          <div class="form-group"><label>Tags (comma-separated)</label><input type="text" id="ytTags" class="text-input"></div>
+          <div class="explainer-options-row">
+            <div class="form-group">
+              <label>Visibility</label>
+              <select id="ytPrivacy" class="select-input">
+                <option value="private" selected>Private (review first)</option>
+                <option value="unlisted">Unlisted (link only)</option>
+                <option value="public">Public</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Extras</label>
+              <label class="chk-label"><input type="checkbox" id="ytIncludeThumb" checked> Thumbnail</label>
+              <label class="chk-label"><input type="checkbox" id="ytIncludeCaptions" checked> Captions (.srt)</label>
+            </div>
+          </div>
+          <button class="btn btn-success btn-lg" id="btnYtUpload" style="margin-top:0.5rem;">Upload to YouTube</button>
+          <p class="voiceover-status" id="ytUploadStatus"></p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+
+  <footer class="app-footer">
+    <p>Powered by <strong>Gemini Omni Flash</strong>, <strong>Lyria 3</strong> &amp; <strong>FFmpeg</strong></p>
+  </footer>
+
+  <!-- Toast Notification Overlay -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "trend-watch-service",
+  "version": "1.0.0",
+  "description": "Standalone Trend Watch agent: checks live trends on a schedule, generates viral video ideas per channel with Gemini, and emails a digest. Designed for Cloud Run + Cloud Scheduler.",
+  "main": "service.js",
+  "type": "module",
+  "scripts": {
+    "start": "node service.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^7.0.0"
+  }
+}
