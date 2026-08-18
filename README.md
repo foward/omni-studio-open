@@ -29,6 +29,10 @@ Set `GCP_PROJECT_ID` and `GCS_BUCKET` in `.env` to enable Cloud Storage and Fire
 
 Do not commit real API keys, OAuth credentials, service-account files, tokens, logs, generated media, or user data. Run a secret scanner such as Gitleaks before publishing changes.
 
+## Author
+
+**Francisco Riveros** — [linkedin.com/in/panchoriveros](https://www.linkedin.com/in/panchoriveros/)
+
 ## License
 
-No license has been selected yet. Add an open-source license before publicly distributing this project as open source.
+Apache 2.0 — see [LICENSE](LICENSE).
