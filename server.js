@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 import multer from 'multer';
 import sharp from 'sharp';
@@ -13,6 +13,7 @@ import { registerYouTubeRoutes, youtubeConfigured } from './youtube.js';
 import { registerAutopilot } from './autopilot.js';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // Detect available ffmpeg filters at startup (cached)
 let ffmpegHasDrawtext = false;
@@ -143,9 +144,9 @@ registerYouTubeRoutes(app, { outputsDir, sanitizeFilename });
 async function notifyUser({ title, message, html = null }) {
   if (process.platform === 'darwin') {
     try {
-      const safeMsg = String(message).replace(/["\\]/g, '');
-      const safeTitle = String(title).replace(/["\\]/g, '');
-      await execAsync(`osascript -e 'display notification "${safeMsg}" with title "${safeTitle}"'`);
+      // Security: Use execFileAsync with JSON.stringify escaping to prevent command injection
+      const script = `display notification ${JSON.stringify(String(message))} with title ${JSON.stringify(String(title))}`;
+      await execFileAsync('osascript', ['-e', script]);
     } catch { /* notification is best-effort */ }
   }
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, DIGEST_EMAIL_TO } = process.env;
@@ -4099,8 +4100,10 @@ async function sendDigestEmail(digest) {
 async function sendDesktopNotification(digest) {
   if (process.platform !== 'darwin' || digest.totalNewIdeas === 0) return false;
   try {
-    const msg = `${digest.totalNewIdeas} new video ideas added to your planner`.replace(/["\\]/g, '');
-    await execAsync(`osascript -e 'display notification "${msg}" with title "OmniStudio Trend Watch"'`);
+    const msg = `${digest.totalNewIdeas} new video ideas added to your planner`;
+    // Security: Use execFileAsync with JSON.stringify escaping to prevent command injection
+    const script = `display notification ${JSON.stringify(msg)} with title "OmniStudio Trend Watch"`;
+    await execFileAsync('osascript', ['-e', script]);
     return true;
   } catch {
     return false;
