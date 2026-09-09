@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 import multer from 'multer';
 import sharp from 'sharp';
@@ -13,6 +13,7 @@ import { registerYouTubeRoutes, youtubeConfigured } from './youtube.js';
 import { registerAutopilot } from './autopilot.js';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // Detect available ffmpeg filters at startup (cached)
 let ffmpegHasDrawtext = false;
@@ -65,13 +66,16 @@ const presetsDir = path.join(publicDir, 'presets');
   }
 });
 
-// Configure Multer for audio uploads
+// Configure Multer for audio uploads with sanitized file extensions
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    const rawExt = path.extname(file.originalname || '');
+    // Sanitize extension to prevent command injection and path traversal
+    const safeExt = sanitizeFilename(rawExt) || '';
+    cb(null, `audio_${Date.now()}${safeExt}`);
   }
 });
 const upload = multer({ storage });
@@ -143,9 +147,10 @@ registerYouTubeRoutes(app, { outputsDir, sanitizeFilename });
 async function notifyUser({ title, message, html = null }) {
   if (process.platform === 'darwin') {
     try {
-      const safeMsg = String(message).replace(/["\\]/g, '');
-      const safeTitle = String(title).replace(/["\\]/g, '');
-      await execAsync(`osascript -e 'display notification "${safeMsg}" with title "${safeTitle}"'`);
+      // Escape backslashes and double quotes for AppleScript string literals and execute directly without shell invocation
+      const safeMsg = String(message).replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, ' ');
+      const safeTitle = String(title).replace(/[\\"]/g, '\\$&').replace(/[\r\n]/g, ' ');
+      await execFileAsync('osascript', ['-e', `display notification "${safeMsg}" with title "${safeTitle}"`]);
     } catch { /* notification is best-effort */ }
   }
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, DIGEST_EMAIL_TO } = process.env;
@@ -287,9 +292,13 @@ app.post('/api/upload-audio', upload.single('audio'), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    // Query file duration using ffprobe
-    const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-    const { stdout } = await execAsync(ffprobeCmd);
+    // Query file duration using ffprobe (using execFileAsync to avoid shell command injection)
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Uploaded audio ${req.file.filename}, Duration: ${duration}s`);
