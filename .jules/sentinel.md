@@ -1,0 +1,4 @@
+## 2026-09-09 - Command Injection via Multer File Extensions and `execAsync` Shell Calls
+**Vulnerability:** Unsanitized file extensions in Multer `storage.filename` and single-quoted string arguments in `osascript` shell execution allowed arbitrary command injection via user-supplied filenames and notification payloads.
+**Learning:** `path.extname()` returns untrusted input if the original filename contains quotes or shell metacharacters after a dot. Passing file paths or strings containing single/double quotes into `exec` or `execAsync` (`/bin/sh -c`) allows shell argument escaping.
+**Prevention:** Always sanitize extensions from user-uploaded filenames, and prefer `execFile` or `execFileAsync` (which passes arguments directly as an array without invoking a shell) over `exec` / `execAsync`.
