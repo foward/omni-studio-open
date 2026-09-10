@@ -143,8 +143,8 @@ registerYouTubeRoutes(app, { outputsDir, sanitizeFilename });
 async function notifyUser({ title, message, html = null }) {
   if (process.platform === 'darwin') {
     try {
-      const safeMsg = String(message).replace(/["\\]/g, '');
-      const safeTitle = String(title).replace(/["\\]/g, '');
+      const safeMsg = String(message).replace(/['"\\]/g, '');
+      const safeTitle = String(title).replace(/['"\\]/g, '');
       await execAsync(`osascript -e 'display notification "${safeMsg}" with title "${safeTitle}"'`);
     } catch { /* notification is best-effort */ }
   }
