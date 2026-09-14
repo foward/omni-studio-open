@@ -65,7 +65,7 @@ const presetsDir = path.join(publicDir, 'presets');
   }
 });
 
-// Configure Multer for audio uploads
+// Configure Multer for audio uploads with security controls (file type filter + max file size limit)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, outputsDir);
@@ -74,7 +74,31 @@ const storage = multer.diskStorage({
     cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
   }
 });
-const upload = multer({ storage });
+
+const ALLOWED_AUDIO_MIME_TYPES = new Set([
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/mp4',
+  'audio/x-m4a',
+  'audio/aac',
+  'audio/ogg',
+  'audio/flac',
+  'audio/webm'
+]);
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit to mitigate DoS risks
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype && ALLOWED_AUDIO_MIME_TYPES.has(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
 
 // Cloud media pull-through: if a requested output isn't on this machine, fetch
 // it from Cloud Storage first (lets a second Mac play media it never generated).
