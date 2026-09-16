@@ -72,7 +72,9 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    const rawExt = path.extname(file.originalname || '');
+    const safeExt = rawExt.replace(/[^a-zA-Z0-9_.-]/g, '');
+    cb(null, `audio_${Date.now()}${safeExt}`);
   }
 });
 
@@ -311,9 +313,13 @@ app.post('/api/upload-audio', upload.single('audio'), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    // Query file duration using ffprobe
-    const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-    const { stdout } = await execAsync(ffprobeCmd);
+    // Query file duration using ffprobe safely with argument array
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Uploaded audio ${req.file.filename}, Duration: ${duration}s`);
