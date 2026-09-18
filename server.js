@@ -72,7 +72,8 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    const ext = path.extname(file.originalname).replace(/[^a-zA-Z0-9.]/g, '');
+    cb(null, `audio_${Date.now()}${ext}`);
   }
 });
 
@@ -311,9 +312,13 @@ app.post('/api/upload-audio', upload.single('audio'), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    // Query file duration using ffprobe
-    const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-    const { stdout } = await execAsync(ffprobeCmd);
+    // Query file duration using ffprobe safely via execFileAsync
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Uploaded audio ${req.file.filename}, Duration: ${duration}s`);
@@ -2569,6 +2574,7 @@ Generate the output conforming to the response schema.
 
 // Generate Standalone Title Card (Intro / Outro)
 app.post('/api/generate-title-card', async (req, res) => {
+  const tempFiles = [];
   try {
     const { title, subtitle, duration = 4, type = 'intro' } = req.body;
     if (!String(title || '').trim() || !String(subtitle || '').trim()) {
@@ -2578,9 +2584,6 @@ app.post('/api/generate-title-card', async (req, res) => {
     
     const bgColor = type === 'intro' ? '0x0d0f1a' : '0x150d1a';
     const accentColor = type === 'intro' ? '0x7c3aed' : '0xec4899';
-    
-    const titleText = String(title).replace(/'/g, "'\\\\''");
-    const subText = String(subtitle).replace(/'/g, "'\\\\''");
 
     const filename = `card_${type}_${Date.now()}.mp4`;
     const outputPath = path.join(outputsDir, filename);
@@ -2588,7 +2591,9 @@ app.post('/api/generate-title-card', async (req, res) => {
 
     let cmd;
     if (ffmpegHasDrawtext) {
-      const drawTextFilter = `drawtext=text='${titleText}':fontcolor=white:fontsize=46:x=(w-text_w)/2:y=(h-text_h)/2-40:font='Arial',drawtext=text='${subText}':fontcolor=${accentColor}:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+30:font='Arial'`;
+      const titleFile = writeDrawtextFile(title, 'card_title', tempFiles);
+      const subFile = writeDrawtextFile(subtitle, 'card_sub', tempFiles);
+      const drawTextFilter = `drawtext=textfile='${titleFile}':expansion=none:fontcolor=white:fontsize=46:x=(w-text_w)/2:y=(h-text_h)/2-40:font='Arial',drawtext=textfile='${subFile}':expansion=none:fontcolor=${accentColor}:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+30:font='Arial'`;
       cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 -vf "${drawTextFilter}" ${enc} -pix_fmt yuv420p "${outputPath}"`;
     } else {
       console.warn('⚠️  Rendering title card WITHOUT text (drawtext unavailable)');
@@ -2606,6 +2611,8 @@ app.post('/api/generate-title-card', async (req, res) => {
   } catch (error) {
     console.error("Error generating title card:", error);
     res.status(500).json({ error: error.message });
+  } finally {
+    tempFiles.forEach(f => fs.unlink(f, () => {}));
   }
 });
 
