@@ -50,6 +50,7 @@ const GEMINI_IMAGE_MODELS = (process.env.GEMINI_IMAGE_MODELS || 'gemini-3.1-flas
   .split(',')
   .map(model => model.trim())
   .filter(Boolean);
+const GEMINI_OMNI_MODEL = process.env.GEMINI_OMNI_MODEL || 'gemini-omni-1.1-flash-preview';
 const INTERACTIONS_URL = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${GEMINI_API_KEY}`;
 
 app.use(cors());
@@ -829,7 +830,7 @@ app.post('/api/generate-turnaround', async (req, res) => {
     console.log("Generating 360-degree turnaround rotation for character...");
 
     const requestBody = {
-      model: "gemini-omni-flash-preview",
+      model: GEMINI_OMNI_MODEL,
       input: [
         {
           type: "image",
@@ -999,7 +1000,7 @@ app.post('/api/generate-scene', async (req, res) => {
       }
       inputParts.push({ type: "text", text: buildPromptText(false, useLastFrame) });
       return {
-        model: "gemini-omni-flash-preview",
+        model: GEMINI_OMNI_MODEL,
         input: inputParts,
         response_format: { type: "video", aspect_ratio: safeAspect }
       };
@@ -1021,7 +1022,7 @@ app.post('/api/generate-scene', async (req, res) => {
       inputParts.push({ type: "text", text: buildPromptText(true, false) });
 
       requestBody = {
-        model: "gemini-omni-flash-preview",
+        model: GEMINI_OMNI_MODEL,
         previous_interaction_id: previousInteractionId,
         input: inputParts,
         response_format: { type: "video", aspect_ratio: safeAspect }
@@ -1699,7 +1700,7 @@ app.post('/api/refine-scene', async (req, res) => {
 
     const safeAspect = aspectRatio === '9:16' ? '9:16' : '16:9';
     const requestBody = {
-      model: "gemini-omni-flash-preview",
+      model: GEMINI_OMNI_MODEL,
       previous_interaction_id: interactionId,
       input: [{ type: "text", text: instruction.trim() }],
       response_format: { type: "video", aspect_ratio: safeAspect }

@@ -1,7 +1,7 @@
 {
-  "name": "omnikids-studio",
-  "version": "1.0.0",
-  "description": "Premium video scene generator and compiler using Gemini Omni Flash and FFmpeg",
+  "name": "omni-studio",
+  "version": "1.1.0",
+  "description": "OmniStudio — local AI video production suite: generate music videos and explainers with Gemini, assemble scenes with FFmpeg, plan channels, and autopilot-publish to YouTube.",
   "main": "server.js",
   "type": "module",
   "scripts": {
