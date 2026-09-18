@@ -19,3 +19,4 @@ planner.json
 trend-watch-service/state.json
 .claude/settings.local.json
 run-*.sh
+docs/LINKEDIN_POST.md
