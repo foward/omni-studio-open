@@ -73,7 +73,8 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    const ext = sanitizeFilename(path.extname(file.originalname)) || '';
+    cb(null, `audio_${Date.now()}${ext}`);
   }
 });
 
@@ -313,8 +314,12 @@ app.post('/api/upload-audio', upload.single('audio'), async (req, res) => {
 
     const filePath = req.file.path;
     // Query file duration using ffprobe
-    const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-    const { stdout } = await execAsync(ffprobeCmd);
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Uploaded audio ${req.file.filename}, Duration: ${duration}s`);
@@ -1392,9 +1397,8 @@ app.post('/api/export-package', async (req, res) => {
 
     const zipFilename = `publish_package_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipFilename);
-    const zipCmd = `zip -j "${zipPath}" ${filesToZip.map(f => `"${f}"`).join(' ')}`;
-    console.log("Building publish package:", zipCmd);
-    await execAsync(zipCmd);
+    console.log("Building publish package:", zipFilename);
+    await execFileAsync('zip', ['-j', zipPath, ...filesToZip]);
 
     res.json({ success: true, url: `/outputs/${zipFilename}`, files: filesToZip.length });
   } catch (error) {
@@ -4378,8 +4382,8 @@ app.post('/api/project/export', async (req, res) => {
 
     const zipName = `omniproj_${String(name).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)}_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipName);
-    const fileArgs = [jsonPath, ...media.map(m => path.join(outputsDir, m))].map(f => `"${f}"`).join(' ');
-    await execAsync(`zip -j "${zipPath}" ${fileArgs}`);
+    const filesToZip = [jsonPath, ...media.map(m => path.join(outputsDir, m))];
+    await execFileAsync('zip', ['-j', zipPath, ...filesToZip]);
 
     console.log(`Project exported: ${zipName} (${media.length} media files)`);
     res.json({ success: true, url: `/outputs/${zipName}`, filename: zipName, mediaCount: media.length });
@@ -4397,7 +4401,7 @@ app.post('/api/project/import', upload.single('project'), async (req, res) => {
     const zipPath = req.file.path;
 
     // -j flattens paths: media lands directly in outputs/, no traversal possible
-    await execAsync(`unzip -o -j "${zipPath}" -d "${outputsDir}"`);
+    await execFileAsync('unzip', ['-o', '-j', zipPath, '-d', outputsDir]);
 
     const projJsonPath = path.join(outputsDir, 'project.json');
     if (!fs.existsSync(projJsonPath)) {
