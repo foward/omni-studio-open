@@ -73,7 +73,9 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    // Security: Sanitize file extension to prevent command injection when path is passed to ffprobe/ffmpeg
+    const ext = sanitizeFilename(path.extname(file.originalname)) || '.mp3';
+    cb(null, `audio_${Date.now()}${ext}`);
   }
 });
 
