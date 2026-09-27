@@ -2570,33 +2570,48 @@ Generate the output conforming to the response schema.
 
 // Generate Standalone Title Card (Intro / Outro)
 app.post('/api/generate-title-card', async (req, res) => {
+  const tempFiles = [];
   try {
-    const { title, subtitle, duration = 4, type = 'intro' } = req.body;
+    const { title, subtitle, duration = 4, type = 'intro', orientation = 'landscape' } = req.body;
     if (!String(title || '').trim() || !String(subtitle || '').trim()) {
       return res.status(400).json({ error: 'Contextual title-card copy is required' });
     }
     const safeDuration = Math.max(1, parseFloat(duration) || 4);
-    
-    const bgColor = type === 'intro' ? '0x0d0f1a' : '0x150d1a';
-    const accentColor = type === 'intro' ? '0x7c3aed' : '0xec4899';
-    
-    const titleText = String(title).replace(/'/g, "'\\\\''");
-    const subText = String(subtitle).replace(/'/g, "'\\\\''");
+    const cardType = type === 'intro' ? 'intro' : 'outro';
+    const bgColor = cardType === 'intro' ? '0x0d0f1a' : '0x150d1a';
+    const accentColor = cardType === 'intro' ? '0x7c3aed' : '0xec4899';
 
-    const filename = `card_${type}_${Date.now()}.mp4`;
+    const filename = `card_${cardType}_${Date.now()}.mp4`;
     const outputPath = path.join(outputsDir, filename);
-    const enc = getHardwareVideoEncoder();
 
-    let cmd;
-    if (ffmpegHasDrawtext) {
-      const drawTextFilter = `drawtext=text='${titleText}':fontcolor=white:fontsize=46:x=(w-text_w)/2:y=(h-text_h)/2-40:font='Arial',drawtext=text='${subText}':fontcolor=${accentColor}:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+30:font='Arial'`;
-      cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 -vf "${drawTextFilter}" ${enc} -pix_fmt yuv420p "${outputPath}"`;
-    } else {
-      console.warn('⚠️  Rendering title card WITHOUT text (drawtext unavailable)');
-      cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 ${enc} -pix_fmt yuv420p "${outputPath}"`;
-    }
+    // Create text overlay if drawtext is unavailable
+    const textOverlayPath = !ffmpegHasDrawtext
+      ? await createCardTextOverlay({
+          title: String(title),
+          subtitle: String(subtitle),
+          subColor: accentColor,
+          orientation,
+          namePrefix: `card_${cardType}_text`,
+          tempFiles
+        })
+      : null;
 
-    console.log(`Generating ${type} title card: ${cmd}`);
+    // Use buildTitleCardCmd which safely writes drawtext strings to temp files via writeDrawtextFile
+    const cmd = buildTitleCardCmd({
+      bgColor,
+      imgPath: null,
+      textOverlayPath,
+      imageMode: 'badge',
+      title: String(title),
+      subtitle: String(subtitle),
+      subColor: accentColor,
+      duration: safeDuration,
+      outPath: outputPath,
+      orientation,
+      tempFiles
+    });
+
+    console.log(`Generating ${cardType} title card securely: ${cmd}`);
     await execAsync(cmd);
 
     res.json({
@@ -2607,6 +2622,8 @@ app.post('/api/generate-title-card', async (req, res) => {
   } catch (error) {
     console.error("Error generating title card:", error);
     res.status(500).json({ error: error.message });
+  } finally {
+    tempFiles.forEach(f => fs.unlink(f, () => {}));
   }
 });
 
