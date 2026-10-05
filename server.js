@@ -73,7 +73,8 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    const ext = sanitizeFilename(path.extname(file.originalname)) || '';
+    cb(null, `audio_${Date.now()}${ext}`);
   }
 });
 
@@ -312,9 +313,13 @@ app.post('/api/upload-audio', upload.single('audio'), async (req, res) => {
     }
 
     const filePath = req.file.path;
-    // Query file duration using ffprobe
-    const ffprobeCmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-    const { stdout } = await execAsync(ffprobeCmd);
+    // Query file duration using ffprobe safely with argument array to prevent shell injection
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Uploaded audio ${req.file.filename}, Duration: ${duration}s`);
@@ -1540,11 +1545,22 @@ app.post('/api/generate-shorts', async (req, res) => {
     const videoPath = path.join(outputsDir, safeVideo);
     if (!fs.existsSync(videoPath)) return res.status(400).json({ error: "Rendered video not found — render it again" });
 
-    const { stdout: durOut } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`);
+    const { stdout: durOut } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      videoPath
+    ]);
     const videoDur = parseFloat(durOut.trim());
     if (!videoDur || videoDur < 6) return res.status(400).json({ error: "Video too short to cut Shorts from" });
 
-    const { stdout: dimOut } = await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "${videoPath}"`);
+    const { stdout: dimOut } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-select_streams', 'v:0',
+      '-show_entries', 'stream=width,height',
+      '-of', 'csv=p=0',
+      videoPath
+    ]);
     const [srcW, srcH] = dimOut.trim().split(',').map(Number);
     const alreadyVertical = srcH > srcW;
 
@@ -2203,7 +2219,12 @@ async function synthesizeTimedNarration(lines, voice = 'Kore', tag = 'narration'
     const mixCmd = `ffmpeg -y ${inputArgs} -filter_complex "${delayFilters};${amixInputs}amix=inputs=${lineWavs.length}:duration=longest:normalize=0[aout]" -map "[aout]" -c:a aac "${outPath}"`;
     await execAsync(mixCmd);
 
-    const { stdout } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${outPath}"`);
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      outPath
+    ]);
     return { filename: outFilename, duration: parseFloat(stdout.trim()), engine };
   } finally {
     tempFiles.forEach(f => fs.unlink(f, () => {}));
@@ -2408,7 +2429,12 @@ app.post('/api/generate-music', async (req, res) => {
       await execAsync(synthCmd);
     }
 
-    const { stdout } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${musicPath}"`);
+    const { stdout } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      musicPath
+    ]);
     const duration = parseFloat(stdout.trim());
 
     console.log(`Background music ready: ${musicFilename} (${duration}s, engine: ${engine})`);
@@ -2461,7 +2487,12 @@ app.post('/api/generate-song', async (req, res) => {
 
     // Songs are never looped or trimmed mid-vocal — keep whatever length Lyria composed,
     // just add a gentle fade-out at the natural end.
-    const { stdout: probeOut } = await execAsync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${srcWavPath}"`);
+    const { stdout: probeOut } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      srcWavPath
+    ]);
     const songDur = parseFloat(probeOut.trim());
     const fadeOutStart = Math.max(0, songDur - 2);
 
@@ -4466,7 +4497,13 @@ app.post('/api/master-track', async (req, res) => {
     const measured = await measureLoudness(inPath, target);
 
     // Stereo widening only makes sense on stereo sources
-    const { stdout: chOut } = await execAsync(`ffprobe -v error -select_streams a:0 -show_entries stream=channels -of csv=p=0 "${inPath}"`);
+    const { stdout: chOut } = await execFileAsync('ffprobe', [
+      '-v', 'error',
+      '-select_streams', 'a:0',
+      '-show_entries', 'stream=channels',
+      '-of', 'csv=p=0',
+      inPath
+    ]);
     const channels = parseInt(chOut.trim(), 10) || 2;
     const widenChain = (widen && channels >= 2) ? ',stereotools=slev=1.25' : '';
 
