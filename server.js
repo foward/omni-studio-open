@@ -1392,9 +1392,8 @@ app.post('/api/export-package', async (req, res) => {
 
     const zipFilename = `publish_package_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipFilename);
-    const zipCmd = `zip -j "${zipPath}" ${filesToZip.map(f => `"${f}"`).join(' ')}`;
-    console.log("Building publish package:", zipCmd);
-    await execAsync(zipCmd);
+    console.log("Building publish package:", zipFilename);
+    await execFileAsync('zip', ['-j', zipPath, ...filesToZip]);
 
     res.json({ success: true, url: `/outputs/${zipFilename}`, files: filesToZip.length });
   } catch (error) {
@@ -1443,7 +1442,9 @@ app.post('/api/project/organize', async (req, res) => {
       const src = path.join(outputsDir, name);
       if (!fs.existsSync(src)) { result.missing.push(name); continue; }
       // role prefix keeps the folder self-describing (scene_01_..., song_..., master_...)
-      const destName = f.role ? `${f.role}_${name}` : name;
+      // Sanitize f.role to prevent path traversal
+      const safeRole = f.role ? sanitizeFilename(f.role) : null;
+      const destName = safeRole ? `${safeRole}_${name}` : name;
       const dest = path.join(localDir, destName);
       await fs.promises.unlink(dest).catch(() => {});
       try { await fs.promises.link(src, dest); }          // hardlink: same bytes, no copy
@@ -3080,7 +3081,8 @@ const BRAND_KIT_MAX = 6;
 app.post('/api/channel-brand', async (req, res) => {
   try {
     const { channelId, imageBase64, remove = false, removeFile = null } = req.body;
-    if (!channelId) return res.status(400).json({ error: "Missing channelId" });
+    const safeChannelId = sanitizeFilename(channelId);
+    if (!safeChannelId) return res.status(400).json({ error: "Missing or invalid channelId" });
 
     const data = await loadPlannerData();
     const channel = data.channels.find(c => c.id === channelId);
@@ -3102,7 +3104,7 @@ app.post('/api/channel-brand', async (req, res) => {
     }
     const mimeMatch = imageBase64.match(/^data:image\/(\w+);base64,/);
     const ext = mimeMatch ? (mimeMatch[1] === 'jpeg' ? 'jpg' : mimeMatch[1]) : 'jpg';
-    const filename = `brand_${channelId}_${Date.now()}.${ext}`;
+    const filename = `brand_${safeChannelId}_${Date.now()}.${ext}`;
     const localPath = path.join(outputsDir, filename);
     await fs.promises.writeFile(
       localPath,
@@ -3152,7 +3154,8 @@ that every video should match. No text, no characters in frame. 16:9 landscape.`
 app.post('/api/generate-brand-kit', async (req, res) => {
   try {
     const { channelId } = req.body;
-    if (!channelId) return res.status(400).json({ error: "Missing channelId" });
+    const safeChannelId = sanitizeFilename(channelId);
+    if (!safeChannelId) return res.status(400).json({ error: "Missing or invalid channelId" });
 
     const data = await loadPlannerData();
     const channel = data.channels.find(c => c.id === channelId);
@@ -3199,7 +3202,7 @@ app.post('/api/generate-brand-kit', async (req, res) => {
         console.warn(`Brand kit piece "${piece.tag}" failed for ${channel.name} — skipping`);
         continue;
       }
-      const filename = `brand_${channelId}_${Date.now()}_${created.length}.png`;
+      const filename = `brand_${safeChannelId}_${Date.now()}_${created.length}.png`;
       const localPath = path.join(outputsDir, filename);
       await fs.promises.writeFile(localPath, Buffer.from(imageBase64, 'base64'));
       if (cloud.storageEnabled) mirrorMedia(localPath).catch(() => {});
@@ -3262,6 +3265,7 @@ app.post('/api/generate-logo', async (req, res) => {
   const tempFiles = [];
   try {
     const { channelId, channelName = '', niche = '', referenceImages = [] } = req.body;
+    const safeChannelId = channelId ? sanitizeFilename(channelId) : null;
     const name = channelName || 'the channel';
 
     const refs = (Array.isArray(referenceImages) ? referenceImages : [])
@@ -3310,7 +3314,7 @@ no shadows, no gradients outside the badge, no watermark.`;
     await fs.promises.writeFile(rawPath, Buffer.from(imageBase64, 'base64'));
 
     // Key out the pure-white backdrop → transparent PNG, sized for watermarking
-    const logoFilename = `logo_${channelId || 'project'}_${Date.now()}.png`;
+    const logoFilename = `logo_${safeChannelId || 'project'}_${Date.now()}.png`;
     const logoPath = path.join(outputsDir, logoFilename);
     await execAsync(`ffmpeg -y -i "${rawPath}" -vf "scale=512:512:force_original_aspect_ratio=decrease,format=rgba,colorkey=0xFFFFFF:0.08:0.05" "${logoPath}"`);
 
@@ -3330,7 +3334,8 @@ no shadows, no gradients outside the badge, no watermark.`;
 app.post('/api/channel-logo', async (req, res) => {
   try {
     const { channelId, imageBase64, remove = false } = req.body;
-    if (!channelId) return res.status(400).json({ error: "Missing channelId" });
+    const safeChannelId = sanitizeFilename(channelId);
+    if (!safeChannelId) return res.status(400).json({ error: "Missing or invalid channelId" });
 
     if (remove) {
       const data = await loadPlannerData();
@@ -3343,7 +3348,7 @@ app.post('/api/channel-logo', async (req, res) => {
       return res.status(400).json({ error: "Missing image data" });
     }
     const ext = ((imageBase64.match(/^data:image\/(\w+);base64,/) || [])[1] || 'png').replace('jpeg', 'jpg');
-    const filename = `logo_${channelId}_${Date.now()}.${ext}`;
+    const filename = `logo_${safeChannelId}_${Date.now()}.${ext}`;
     await fs.promises.writeFile(
       path.join(outputsDir, filename),
       Buffer.from(imageBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64')
