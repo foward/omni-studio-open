@@ -73,7 +73,9 @@ const storage = multer.diskStorage({
     cb(null, outputsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `audio_${Date.now()}${path.extname(file.originalname)}`);
+    // Sanitize extension from originalname to prevent shell metacharacter injection
+    const ext = path.extname(file?.originalname || '').replace(/[^a-zA-Z0-9_.-]/g, '');
+    cb(null, `audio_${Date.now()}${ext}`);
   }
 });
 
