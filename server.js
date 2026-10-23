@@ -2570,6 +2570,7 @@ Generate the output conforming to the response schema.
 
 // Generate Standalone Title Card (Intro / Outro)
 app.post('/api/generate-title-card', async (req, res) => {
+  const tempFiles = [];
   try {
     const { title, subtitle, duration = 4, type = 'intro' } = req.body;
     if (!String(title || '').trim() || !String(subtitle || '').trim()) {
@@ -2579,9 +2580,6 @@ app.post('/api/generate-title-card', async (req, res) => {
     
     const bgColor = type === 'intro' ? '0x0d0f1a' : '0x150d1a';
     const accentColor = type === 'intro' ? '0x7c3aed' : '0xec4899';
-    
-    const titleText = String(title).replace(/'/g, "'\\\\''");
-    const subText = String(subtitle).replace(/'/g, "'\\\\''");
 
     const filename = `card_${type}_${Date.now()}.mp4`;
     const outputPath = path.join(outputsDir, filename);
@@ -2589,8 +2587,12 @@ app.post('/api/generate-title-card', async (req, res) => {
 
     let cmd;
     if (ffmpegHasDrawtext) {
-      const drawTextFilter = `drawtext=text='${titleText}':fontcolor=white:fontsize=46:x=(w-text_w)/2:y=(h-text_h)/2-40:font='Arial',drawtext=text='${subText}':fontcolor=${accentColor}:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+30:font='Arial'`;
-      cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 -vf "${drawTextFilter}" ${enc} -pix_fmt yuv420p "${outputPath}"`;
+      const titleFile = writeDrawtextFile(title, 'card_title', tempFiles);
+      const subFile = writeDrawtextFile(subtitle, 'card_sub', tempFiles);
+      const dtTitle = titleFile ? `drawtext=textfile='${titleFile}':expansion=none:fontcolor=white:fontsize=46:x=(w-text_w)/2:y=(h-text_h)/2-40:font='Arial'` : '';
+      const dtSub = subFile ? `drawtext=textfile='${subFile}':expansion=none:fontcolor=${accentColor}:fontsize=26:x=(w-text_w)/2:y=(h-text_h)/2+30:font='Arial'` : '';
+      const drawTextFilter = [dtTitle, dtSub].filter(Boolean).join(',');
+      cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 ${drawTextFilter ? `-vf "${drawTextFilter}" ` : ''}${enc} -pix_fmt yuv420p "${outputPath}"`;
     } else {
       console.warn('⚠️  Rendering title card WITHOUT text (drawtext unavailable)');
       cmd = `ffmpeg -y -f lavfi -i color=c=${bgColor}:s=1280x720:d=${safeDuration}:r=30 ${enc} -pix_fmt yuv420p "${outputPath}"`;
@@ -2607,6 +2609,8 @@ app.post('/api/generate-title-card', async (req, res) => {
   } catch (error) {
     console.error("Error generating title card:", error);
     res.status(500).json({ error: error.message });
+  } finally {
+    tempFiles.forEach(f => fs.unlink(f, () => {}));
   }
 });
 
