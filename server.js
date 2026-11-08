@@ -1392,9 +1392,9 @@ app.post('/api/export-package', async (req, res) => {
 
     const zipFilename = `publish_package_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipFilename);
-    const zipCmd = `zip -j "${zipPath}" ${filesToZip.map(f => `"${f}"`).join(' ')}`;
-    console.log("Building publish package:", zipCmd);
-    await execAsync(zipCmd);
+    console.log("Building publish package:", zipFilename);
+    // Security: Use execFileAsync with argument array to prevent shell command injection
+    await execFileAsync('zip', ['-j', zipPath, ...filesToZip]);
 
     res.json({ success: true, url: `/outputs/${zipFilename}`, files: filesToZip.length });
   } catch (error) {
@@ -4378,8 +4378,9 @@ app.post('/api/project/export', async (req, res) => {
 
     const zipName = `omniproj_${String(name).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)}_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipName);
-    const fileArgs = [jsonPath, ...media.map(m => path.join(outputsDir, m))].map(f => `"${f}"`).join(' ');
-    await execAsync(`zip -j "${zipPath}" ${fileArgs}`);
+    const filesToArchive = [jsonPath, ...media.map(m => path.join(outputsDir, m))];
+    // Security: Use execFileAsync with argument array to prevent shell command injection
+    await execFileAsync('zip', ['-j', zipPath, ...filesToArchive]);
 
     console.log(`Project exported: ${zipName} (${media.length} media files)`);
     res.json({ success: true, url: `/outputs/${zipName}`, filename: zipName, mediaCount: media.length });
@@ -4396,8 +4397,8 @@ app.post('/api/project/import', upload.single('project'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No project archive uploaded" });
     const zipPath = req.file.path;
 
-    // -j flattens paths: media lands directly in outputs/, no traversal possible
-    await execAsync(`unzip -o -j "${zipPath}" -d "${outputsDir}"`);
+    // Security: Use execFileAsync to prevent shell command injection (-j flattens paths: no traversal possible)
+    await execFileAsync('unzip', ['-o', '-j', zipPath, '-d', outputsDir]);
 
     const projJsonPath = path.join(outputsDir, 'project.json');
     if (!fs.existsSync(projJsonPath)) {
