@@ -4378,8 +4378,9 @@ app.post('/api/project/export', async (req, res) => {
 
     const zipName = `omniproj_${String(name).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)}_${stamp}.zip`;
     const zipPath = path.join(outputsDir, zipName);
-    const fileArgs = [jsonPath, ...media.map(m => path.join(outputsDir, m))].map(f => `"${f}"`).join(' ');
-    await execAsync(`zip -j "${zipPath}" ${fileArgs}`);
+    const filePaths = [jsonPath, ...media.map(m => path.join(outputsDir, m))];
+    // Security: Use execFileAsync with argument array to avoid shell command injection
+    await execFileAsync('zip', ['-j', zipPath, ...filePaths]);
 
     console.log(`Project exported: ${zipName} (${media.length} media files)`);
     res.json({ success: true, url: `/outputs/${zipName}`, filename: zipName, mediaCount: media.length });
@@ -4396,8 +4397,9 @@ app.post('/api/project/import', upload.single('project'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: "No project archive uploaded" });
     const zipPath = req.file.path;
 
+    // Security: Use execFileAsync with argument array to avoid shell command injection
     // -j flattens paths: media lands directly in outputs/, no traversal possible
-    await execAsync(`unzip -o -j "${zipPath}" -d "${outputsDir}"`);
+    await execFileAsync('unzip', ['-o', '-j', zipPath, '-d', outputsDir]);
 
     const projJsonPath = path.join(outputsDir, 'project.json');
     if (!fs.existsSync(projJsonPath)) {
